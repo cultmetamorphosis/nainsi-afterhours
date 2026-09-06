@@ -1,0 +1,45 @@
+name: Deploy Nainsi Afterhours
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Extract website
+        run: |
+          mkdir -p published
+          unzip -q Piyush-Nainsi-Afterhours-V8.zip -d published
+          test -f published/piyush-nainsi-afterhours-v8/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: published/piyush-nainsi-afterhours-v8
+
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
