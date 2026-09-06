@@ -1,4 +1,4 @@
-name: Deploy Nainsi Afterhours
+name: Deploy P × N Afterhours
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -19,27 +19,39 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract website
-        run: |
-          mkdir -p published
-          unzip -q Piyush-Nainsi-Afterhours-V8.zip -d published
-          test -f published/piyush-nainsi-afterhours-v8/index.html
-
-      - name: Configure GitHub Pages
+      - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload website
+      - name: Extract latest website package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site _unpacked
+
+          archive="$(find . -maxdepth 1 -type f -name 'Piyush-Nainsi-Afterhours-V*.zip' -printf '%f\n' | sort -V | tail -n 1)"
+          test -n "$archive"
+
+          echo "Deploying: $archive"
+          unzip -q "$archive" -d _unpacked
+
+          index_path="$(find _unpacked -type f -name index.html -print -quit)"
+          test -n "$index_path"
+
+          site_root="$(dirname "$index_path")"
+          cp -a "$site_root"/. _site/
+          test -f _site/index.html
+
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: published/piyush-nainsi-afterhours-v8
+          path: _site
 
-      - name: Publish website
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
